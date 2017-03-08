@@ -7,6 +7,10 @@ let mainWindow
 let replyToWindow
 let isQuitting = false
 
+let loadURL_options = {
+  userAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/56.0.2924.76 Chrome/56.0.2924.76 Safari/537.36"
+}
+
 const isAlreadyRunning = app.makeSingleInstance(() => {
   if (mainWindow) {
     if (mainWindow.isMinimized()) {
@@ -24,7 +28,7 @@ if (isAlreadyRunning) {
 function updateBadge(title) {
   const unreadCount = (/^.+\s\((\d+[,]?\d+)\)/).exec(title)
 
-  app.dock.setBadge(unreadCount ? unreadCount[1] : '')
+  if(app.dock) app.dock.setBadge(unreadCount ? unreadCount[1] : '')
 }
 
 function createWindow() {
@@ -38,12 +42,13 @@ function createWindow() {
     }
   })
 
-  mainWindow.loadURL('https://mail.google.com')
+  mainWindow.loadURL('https://mail.google.com', loadURL_options)
 
   mainWindow.on('close', (e) => {
     if (!isQuitting) {
       e.preventDefault()
-      app.hide()
+      //app.hide()
+      mainWindow.minimize()
     }
   })
 
@@ -55,7 +60,7 @@ function createMailTo(url) {
     parent: mainWindow
   })
 
-  replyToWindow.loadURL(`https://mail.google.com/mail/?extsrc=mailto&url=${url}`)
+  replyToWindow.loadURL(`https://mail.google.com/mail/?extsrc=mailto&url=${url}`, loadURL_options)
 }
 
 app.on('ready', () => {
@@ -71,7 +76,7 @@ app.on('ready', () => {
   webContents.on('new-window', (e, url) => {
     if (/^(https:\/\/(mail|accounts)\.google\.com).*/.test(url)) {
       e.preventDefault()
-      mainWindow.loadURL(url)
+      mainWindow.loadURL(url, loadURL_options)
     } else {
       e.preventDefault()
       shell.openExternal(url)
